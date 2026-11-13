@@ -1,4 +1,3 @@
-// Dots gently repel from the pointer and spring back into their grid.
 const canvas = document.getElementById('dot-grid');
 const context = canvas.getContext('2d');
 const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
@@ -68,7 +67,7 @@ window.addEventListener('pointermove', event => {
   if (event.pointerType === 'touch') return;
   pointer.x = event.clientX; pointer.y = event.clientY; schedule();
 }, { passive: true });
-// Click ripple temporarily disabled; uncomment this handler to restore it.
+// Click ripple effect
 /*
 window.addEventListener('click', event => {
   if (motionPreference.matches || event.detail === 0) return;
@@ -85,7 +84,7 @@ window.addEventListener('resize', resize);
 motionPreference.addEventListener('change', schedule);
 resize();
 
-// Keep an accessible, stable heading while its visual text is retyped.
+
 const typedName = document.getElementById('typed-name');
 const fullName = typedName.textContent;
 let typingTimer;
@@ -115,3 +114,83 @@ function startNameAnimation() {
 motionPreference.addEventListener('change', startNameAnimation);
 document.addEventListener('visibilitychange', startNameAnimation);
 startNameAnimation();
+
+// A glossy companion with spring dragging and softly changing flight.
+const cat = document.getElementById('ascii-cat');
+let catX = Math.max(0, innerWidth - 150), catY = Math.max(0, innerHeight - 180);
+let catVX = -.3, catVY = -.15, catFrame = null, catLast = 0;
+let catDrag = null;
+function clampCat() {
+  const maxX = Math.max(0, innerWidth - cat.offsetWidth);
+  const maxY = Math.max(0, innerHeight - cat.offsetHeight);
+  if (catX < 0 || catX > maxX) catVX *= -.7;
+  if (catY < 0 || catY > maxY) catVY *= -.7;
+  catX = Math.max(0, Math.min(catX, maxX));
+  catY = Math.max(0, Math.min(catY, maxY));
+}
+function paintCat() {
+  const tilt = motionPreference.matches ? 0 : Math.max(-7, Math.min(7, catVX * 1.5));
+  cat.style.transform = `translate3d(${catX}px, ${catY}px, 0) rotate(${tilt}deg)`;
+}
+function floatCat(now) {
+  const step = Math.min((now - catLast) / 16.667 || 1, 2);
+  catLast = now;
+  if (catDrag) {
+    if (motionPreference.matches) {
+      catX = catDrag.targetX; catY = catDrag.targetY; catVX = catVY = 0;
+    } else {
+      catVX = (catVX + (catDrag.targetX - catX) * .065 * step) * Math.pow(.67, step);
+      catVY = (catVY + (catDrag.targetY - catY) * .065 * step) * Math.pow(.67, step);
+      catX += catVX * step; catY += catVY * step;
+    }
+  } else if (!motionPreference.matches) {
+    const desiredX = Math.sin(now * .00023) * .42;
+    const desiredY = Math.cos(now * .00031) * .32;
+    catVX += (desiredX - catVX) * .012 * step;
+    catVY += (desiredY - catVY) * .012 * step;
+    // Gentle edge forces steer the bubble away before it hits the viewport.
+    const right = innerWidth - cat.offsetWidth, bottom = innerHeight - cat.offsetHeight;
+    if (catX < 28) catVX += .025 * step;
+    if (catX > right - 28) catVX -= .025 * step;
+    if (catY < 28) catVY += .025 * step;
+    if (catY > bottom - 28) catVY -= .025 * step;
+    catVX = Math.max(-4, Math.min(4, catVX));
+    catVY = Math.max(-4, Math.min(4, catVY));
+    catX += catVX * step; catY += catVY * step;
+  }
+  clampCat(); paintCat();
+  catFrame = !document.hidden && (catDrag || !motionPreference.matches) ? requestAnimationFrame(floatCat) : null;
+}
+function syncCatMotion() {
+  cancelAnimationFrame(catFrame); catFrame = null;
+  if (!document.hidden && (catDrag || !motionPreference.matches)) {
+    catLast = performance.now(); catFrame = requestAnimationFrame(floatCat);
+  }
+}
+cat.addEventListener('pointerdown', event => {
+  if (event.button !== 0) return;
+  catDrag = { id: event.pointerId, x: event.clientX - catX, y: event.clientY - catY, targetX: catX, targetY: catY };
+  cat.setPointerCapture(event.pointerId);
+  cat.classList.add('dragging'); syncCatMotion(); event.preventDefault();
+});
+cat.addEventListener('pointermove', event => {
+  if (!catDrag || event.pointerId !== catDrag.id) return;
+  catDrag.targetX = Math.max(0, Math.min(event.clientX - catDrag.x, innerWidth - cat.offsetWidth));
+  catDrag.targetY = Math.max(0, Math.min(event.clientY - catDrag.y, innerHeight - cat.offsetHeight));
+});
+function releaseCat(event) {
+  if (!catDrag || event.pointerId !== catDrag.id) return;
+  catDrag = null; cat.classList.remove('dragging'); syncCatMotion();
+}
+cat.addEventListener('pointerup', releaseCat);
+cat.addEventListener('pointercancel', releaseCat);
+cat.addEventListener('lostpointercapture', releaseCat);
+cat.addEventListener('keydown', event => {
+  const delta = { ArrowLeft: [-15,0], ArrowRight: [15,0], ArrowUp: [0,-15], ArrowDown: [0,15] }[event.key];
+  if (!delta) return;
+  event.preventDefault(); catX += delta[0]; catY += delta[1]; clampCat(); paintCat();
+});
+window.addEventListener('resize', () => { clampCat(); paintCat(); });
+document.addEventListener('visibilitychange', syncCatMotion);
+motionPreference.addEventListener('change', syncCatMotion);
+clampCat(); paintCat(); syncCatMotion();

@@ -39,3 +39,19 @@ footer { margin-top: auto; padding-top: 48px; text-align: center; color: #888888
 .typing-cursor { display: inline-block; width: 8px; height: .95em; margin-left: 5px; background: currentColor; vertical-align: -.08em; animation: cursor-blink 1s step-end infinite; }
 @keyframes cursor-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .typing-cursor { animation: none; } }
+
+#ascii-cat { position: fixed; left: 0; top: 0; z-index: 5; padding: 12px; color: #ddd; cursor: grab; touch-action: none; user-select: none; will-change: transform; }
+#ascii-cat pre { margin: 0; font: 15px/1.15 "SFMono-Regular", Consolas, monospace; white-space: pre; }
+#ascii-cat.dragging { cursor: grabbing; color: #fff; }
+#ascii-cat:focus-visible { outline: 1px dashed #aaa; outline-offset: 2px; }
+
+/* Visible bubble around the draggable ASCII cat. */
+#ascii-cat { width: 112px; height: 112px; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,.5); border-radius: 50%; background: rgba(24,24,24,.94); box-shadow: 0 0 24px rgba(255,255,255,.12), inset 0 0 18px rgba(255,255,255,.04); color: #fff; z-index: 20; }
+#ascii-cat pre { font-size: 17px; text-align: left; pointer-events: none; }
+#ascii-cat:hover { border-color: #fff; box-shadow: 0 0 30px rgba(255,255,255,.2); }
+
+/* Glassy highlights give the companion bubble depth. */
+#ascii-cat { overflow: hidden; border-color: rgba(255,255,255,.55); background: radial-gradient(circle at 28% 20%, rgba(255,255,255,.25), transparent 40%), radial-gradient(circle at 75% 85%, rgba(255,255,255,.1), transparent 50%), rgba(22,22,22,.78); backdrop-filter: blur(8px); box-shadow: inset 2px 3px 8px rgba(255,255,255,.17), inset -3px -5px 12px rgba(0,0,0,.65), 0 12px 32px rgba(0,0,0,.4), 0 0 18px rgba(255,255,255,.07); }
+#ascii-cat::before { content: ''; position: absolute; top: 12px; left: 20px; width: 38px; height: 17px; border-radius: 50%; background: linear-gradient(180deg,rgba(255,255,255,.65),rgba(255,255,255,0)); transform: rotate(-30deg); filter: blur(1px); pointer-events: none; }
+#ascii-cat::after { content: ''; position: absolute; bottom: 12px; right: 17px; width: 22px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.2); transform: rotate(-35deg); filter: blur(3px); pointer-events: none; }
+#ascii-cat pre { position: relative; z-index: 1; text-shadow: 0 1px 8px rgba(255,255,255,.25); }
